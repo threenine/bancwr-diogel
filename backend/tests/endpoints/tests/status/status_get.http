@@ -1,0 +1,4 @@
+### GET request to status
+GET {{host}}/api/bunker/status
+
+> ../../asserts/should_be_200_ok.js

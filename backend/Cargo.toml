@@ -1,0 +1,74 @@
+[package]
+name = "bunker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+nostr = { version = "0.39", features = ["nip44"] }
+nostr-sdk = { version = "0.39", features = ["nip44"] }
+anyhow = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+dotenvy = "0.15"
+axum = "0.7"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tower-http = { version = "0.6.8", features = ["trace", "cors"] }
+duckdb = { version = "0.10", features = ["bundled", "chrono", "uuid"] }
+chrono = { version = "=0.4.34", features = ["serde"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }
+
+# Nostr client for relay connections
+nostr-relay-pool = "0.39"
+
+# For connection pooling and async
+futures = "0.3"
+
+[dev-dependencies]
+tempfile = "3"
+reqwest = { version = "0.12", features = ["json"] }
+tower = { version = "0.4", features = ["util"] }
+tokio-test = "0.4"
+
+[profile.test]
+opt-level = 1
+debug = false
+incremental = true
+
+[[test]]
+name = "config_test"
+path = "tests/unit/config_test.rs"
+
+[[test]]
+name = "signer_test"
+path = "tests/unit/signer_test.rs"
+
+[[test]]
+name = "server_test"
+path = "tests/unit/server_test.rs"
+
+[[test]]
+name = "db_test"
+path = "tests/unit/db_test.rs"
+
+[[test]]
+name = "api_test"
+path = "tests/integration/api_test.rs"
+
+[[test]]
+name = "config_api_test"
+path = "tests/integration/config_api_test.rs"
+
+[[test]]
+name = "relay_test"
+path = "tests/unit/relay_test.rs"
+
+[[test]]
+name = "nip46_test"
+path = "tests/unit/nip46_test.rs"
+
+[[test]]
+name = "team_api_test"
+path = "tests/integration/team_api_test.rs"

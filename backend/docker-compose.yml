@@ -1,0 +1,16 @@
+services:
+  bunker:
+    build: .
+    ports:
+      - "${BUNKER_PORT:-3000}:${BUNKER_PORT:-3000}"
+    environment:
+      - BUNKER_NSEC=${BUNKER_NSEC}
+      - BUNKER_PORT=${BUNKER_PORT:-3000}
+      - RUST_LOG=info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${BUNKER_PORT:-3000}/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

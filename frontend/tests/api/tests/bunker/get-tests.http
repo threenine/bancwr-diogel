@@ -1,0 +1,16 @@
+### GET to check status of backend
+GET {{host}}/api/bunker/status
+
+> ../../asserts/bunker/should_be_ok_with_body.js
+
+###
+
+GET {{host}}/api/bunker/logs
+
+> ../../asserts/bunker/should_be_ok_with_body.js
+
+###
+
+GET {{host}}/api/bunker/logs
+
+> ../../asserts/bunker/should_be_ok_with_body.js

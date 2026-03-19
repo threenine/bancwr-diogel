@@ -1,0 +1,4 @@
+### GET request to logs
+GET {{host}}/api/bunker/logs
+
+> ../../asserts/should_be_200_ok.js

@@ -1,0 +1,5 @@
+### GET request to health
+GET {{host}}/health
+
+> ../../asserts/should_be_200_ok.js
+
