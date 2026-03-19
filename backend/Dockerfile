@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Bancwr Diogel (Bunker)
 
 # Stage 1: Build
-FROM rust:1.81-slim-bookworm AS builder
+FROM rust:1.94-slim-bookworm AS builder
 
 WORKDIR /usr/src/bunker
 
@@ -9,13 +9,16 @@ WORKDIR /usr/src/bunker
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
 
 # Create dummy source for dependency caching
-RUN mkdir src && echo "fn main() {}" > src/main.rs && touch src/lib.rs
+RUN mkdir src && echo "fn main() {}" > src/main.rs && \
+    echo "pub mod config; pub mod signer; pub mod server; pub mod db; pub mod relay; pub mod nip46; pub mod state;" > src/lib.rs && \
+    touch src/config.rs src/signer.rs src/server.rs src/db.rs src/relay.rs src/nip46.rs src/state.rs
 
 # Build dependencies only (caching)
 RUN cargo build --release
@@ -23,6 +26,7 @@ RUN rm -f target/release/deps/bunker*
 
 # Copy actual source code
 COPY src/ ./src/
+RUN touch src/lib.rs src/main.rs
 
 # Final build
 RUN cargo build --release
