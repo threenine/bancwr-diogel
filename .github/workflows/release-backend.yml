@@ -41,14 +41,6 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          # Aggressive caching - separate dependency layer from app
-          cache-from: |
-            type=gha,scope=backend-deps
-            type=gha,scope=backend-release
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/bancwr-diogel-backend:buildcache
-          cache-to: |
-            type=gha,scope=backend-deps,mode=max
-            type=gha,scope=backend-release,mode=max
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/bancwr-diogel-backend:buildcache,mode=max
-          # Export cache for cargo-chef layer
+          cache-from: type=gha,scope=backend-cargo-chef
+          cache-to: type=gha,scope=backend-cargo-chef,mode=max
           provenance: false
