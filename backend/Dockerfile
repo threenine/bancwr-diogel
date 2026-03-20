@@ -21,14 +21,23 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Stage 3: Builder - compiles dependencies and the app
 FROM chef AS builder
 
-# Install build dependencies + mold linker for faster linking
+# Install build dependencies + mold linker
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     g++ \
     mold \
     clang \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Download and install pre-built DuckDB library
+RUN curl -L -o duckdb.zip https://github.com/duckdb/duckdb/releases/download/v0.10.3/libduckdb-linux-amd64.zip && \
+    unzip duckdb.zip -d /usr/local/lib && \
+    cp /usr/local/lib/libduckdb.so /usr/local/lib/libduckdb.so.0 && \
+    ldconfig && \
+    rm duckdb.zip
 
 # Enable sccache for faster compilation
 ENV RUSTC_WRAPPER=sccache
@@ -51,12 +60,19 @@ RUN --mount=type=cache,target=/sccache \
 # Stage 4: Runtime
 FROM debian:bookworm-slim
 
-# Install runtime dependencies
+# Install runtime dependencies + DuckDB
 RUN apt-get update && apt-get install -y \
     libssl3 \
     ca-certificates \
     curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Download DuckDB runtime library
+RUN curl -L -o duckdb.zip https://github.com/duckdb/duckdb/releases/download/v0.10.3/libduckdb-linux-amd64.zip && \
+    unzip duckdb.zip -d /usr/local/lib && \
+    ldconfig && \
+    rm duckdb.zip
 
 WORKDIR /app
 
