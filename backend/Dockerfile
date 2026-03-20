@@ -4,6 +4,13 @@
 # Stage 1: Chef - prepares the build recipe
 FROM rust:1.94-slim-bookworm AS chef
 WORKDIR /usr/src/bunker
+
+# Install dependencies needed for cargo-chef
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN cargo install cargo-chef
 
 # Stage 2: Planner - generates the recipe.json
@@ -28,6 +35,16 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # Copy source and build the app
 COPY . .
 RUN cargo build --release
+
+# Stage 4: Runtime
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
