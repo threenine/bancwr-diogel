@@ -1,9 +1,18 @@
 # Multi-stage Dockerfile for Bancwr Diogel (Bunker)
+# Uses cargo-chef for optimal dependency caching
 
-# Stage 1: Build
-FROM rust:1.94-slim-bookworm AS builder
-
+# Stage 1: Chef - prepares the build recipe
+FROM rust:1.94-slim-bookworm AS chef
 WORKDIR /usr/src/bunker
+RUN cargo install cargo-chef
+
+# Stage 2: Planner - generates the recipe.json
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+# Stage 3: Builder - compiles dependencies and the app
+FROM chef AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -12,29 +21,18 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy manifests
-COPY Cargo.toml Cargo.lock ./
+# Copy the recipe and build dependencies (this layer is cached!)
+COPY --from=planner /usr/src/bunker/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
-# Create dummy source for dependency caching
-RUN mkdir src && echo "fn main() {}" > src/main.rs && \
-    echo "pub mod config; pub mod signer; pub mod server; pub mod db; pub mod relay; pub mod nip46; pub mod state;" > src/lib.rs && \
-    touch src/config.rs src/signer.rs src/server.rs src/db.rs src/relay.rs src/nip46.rs src/state.rs
-
-# Build dependencies only (caching)
-RUN cargo build --release
-RUN rm -f target/release/deps/bunker*
-
-# Copy actual source code
-COPY src/ ./src/
-RUN touch src/lib.rs src/main.rs
-
-# Final build
+# Copy source and build the app
+COPY . .
 RUN cargo build --release
 
-# Stage 2: Runtime
+# Stage 4: Runtime
 FROM debian:bookworm-slim
 
-# Install runtime dependencies (OpenSSL is required by nostr-sdk/reqwest)
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libssl3 \
     ca-certificates \
@@ -43,19 +41,17 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy the binary from the builder stage
+# Copy the binary
 COPY --from=builder /usr/src/bunker/target/release/bunker /usr/local/bin/bunker
 
 # Default port configuration
 ARG DEFAULT_PORT=3000
 ENV BUNKER_PORT=${DEFAULT_PORT}
 
-# Expose the port
 EXPOSE ${DEFAULT_PORT}
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:${BUNKER_PORT}/health || exit 1
 
-# Run the binary
 CMD ["bunker"]
