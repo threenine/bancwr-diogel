@@ -4,6 +4,13 @@
 # Stage 1: Chef - prepares the build recipe
 FROM rust:1.94-slim-bookworm AS chef
 WORKDIR /usr/src/bunker
+
+# Install dependencies needed for cargo-chef and sccache
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN cargo install cargo-chef sccache
 
 # Stage 2: Planner - generates the recipe.json
