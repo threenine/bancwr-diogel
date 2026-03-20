@@ -16,7 +16,7 @@ axum = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tower-http = { version = "0.6.8", features = ["trace", "cors"] }
-duckdb = { version = "0.10", features = ["chrono", "uuid"] }
+duckdb = { version = "0.10", features = ["bundled", "chrono", "uuid"] }
 chrono = { version = "=0.4.34", features = ["serde"] }
 uuid = { version = "1.0", features = ["serde", "v4"] }
 
