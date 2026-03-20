@@ -1,10 +1,10 @@
 # Multi-stage Dockerfile for Bancwr Diogel (Bunker)
-# Uses cargo-chef for optimal dependency caching
+# Uses cargo-chef + sccache + mold for optimal build speed
 
 # Stage 1: Chef - prepares the build recipe
 FROM rust:1.94-slim-bookworm AS chef
 WORKDIR /usr/src/bunker
-RUN cargo install cargo-chef
+RUN cargo install cargo-chef sccache
 
 # Stage 2: Planner - generates the recipe.json
 FROM chef AS planner
@@ -14,20 +14,32 @@ RUN cargo chef prepare --recipe-path recipe.json
 # Stage 3: Builder - compiles dependencies and the app
 FROM chef AS builder
 
-# Install build dependencies
+# Install build dependencies + mold linker for faster linking
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     g++ \
+    mold \
+    clang \
     && rm -rf /var/lib/apt/lists/*
+
+# Enable sccache for faster compilation
+ENV RUSTC_WRAPPER=sccache
+ENV SCCACHE_DIR=/sccache
+ENV SCCACHE_CACHE_SIZE=2G
+
+# Use mold linker for faster linking
+ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold -D warnings"
 
 # Copy the recipe and build dependencies (this layer is cached!)
 COPY --from=planner /usr/src/bunker/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN --mount=type=cache,target=/sccache \
+    cargo chef cook --release --recipe-path recipe.json
 
 # Copy source and build the app
 COPY . .
-RUN cargo build --release
+RUN --mount=type=cache,target=/sccache \
+    cargo build --release
 
 # Stage 4: Runtime
 FROM debian:bookworm-slim

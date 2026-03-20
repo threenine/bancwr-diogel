@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Rust build artifacts
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests (not needed for release build)
+tests/
+
+# Documentation
+docs/
+*.md
+
+# CI/CD
+.github/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Environment files (except example)
+.env
+!.env.example
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
