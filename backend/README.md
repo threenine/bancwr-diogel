@@ -192,3 +192,4 @@ If you use an IDE that supports `.http` files (like RustRover or IntelliJ), you 
 - All tests live in the `tests/` directory.
 - Use `RUSTFLAGS="-D warnings" cargo clippy` for linting.
 - The project is named `bunker`.
+
