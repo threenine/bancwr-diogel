@@ -1,5 +1,6 @@
 use bunker::db::Database;
 use chrono::Utc;
+use tempfile::NamedTempFile;
 
 #[test]
 fn test_db_init_and_tables() {
@@ -51,7 +52,7 @@ fn test_db_get_config_non_existent() {
 fn test_db_recent_logs_ordering() {
     let db = Database::new(":memory:").expect("Failed to create in-memory database");
     let now = Utc::now();
-    
+
     db.log_signing_event("event1", "pub1", 1, now).unwrap();
     db.log_signing_event("event2", "pub2", 2, now + chrono::Duration::seconds(1)).unwrap();
 
@@ -64,10 +65,10 @@ fn test_db_recent_logs_ordering() {
 #[test]
 fn test_db_team_management() {
     let db = Database::new(":memory:").expect("Failed to create in-memory database");
-    
+
     // Add member
     let id = db.add_team_member("Alice", "npub1...", "admin").expect("Failed to add member");
-    
+
     // Get members
     let members = db.get_team_members().expect("Failed to get members");
     assert_eq!(members.len(), 1);
@@ -75,9 +76,79 @@ fn test_db_team_management() {
     assert_eq!(members[0].pubkey, "npub1...");
     assert_eq!(members[0].role, "admin");
     assert_eq!(members[0].id, id);
-    
+
     // Remove member
     db.remove_team_member(id).expect("Failed to remove member");
     let members = db.get_team_members().expect("Failed to get members");
     assert_eq!(members.len(), 0);
+}
+
+// --- New checks required by the migration plan ---
+
+#[test]
+fn test_db_file_backed_persistence() {
+    let tmp = NamedTempFile::new().expect("Failed to create temp file");
+    let path = tmp.path().to_str().unwrap().to_string();
+
+    {
+        let db = Database::new(&path).expect("Failed to create file-backed database");
+        db.set_config("persist_key", "persist_value").expect("Failed to set config");
+        db.log_signing_event("evt_persist", "pubkey_persist", 1, Utc::now())
+            .expect("Failed to log event");
+        db.add_team_member("Bob", "npub1bob", "signer")
+            .expect("Failed to add member");
+    } // db handle dropped here
+
+    // Reopen and verify data survived
+    let db2 = Database::new(&path).expect("Failed to reopen file-backed database");
+
+    let val = db2.get_config("persist_key").expect("Failed to get config");
+    assert_eq!(val, Some("persist_value".to_string()));
+
+    let logs = db2.get_recent_logs(10).expect("Failed to get logs");
+    assert_eq!(logs.len(), 1);
+    assert_eq!(logs[0].event_id, "evt_persist");
+
+    let members = db2.get_team_members().expect("Failed to get members");
+    assert_eq!(members.len(), 1);
+    assert_eq!(members[0].name, "Bob");
+}
+
+#[test]
+fn test_db_timestamp_ordering_rfc3339() {
+    let db = Database::new(":memory:").expect("Failed to create in-memory database");
+    let base = Utc::now();
+
+    // Insert out-of-order; expect DESC ordering by RFC3339 text
+    db.log_signing_event("oldest", "pub", 1, base).unwrap();
+    db.log_signing_event("newest", "pub", 1, base + chrono::Duration::seconds(10)).unwrap();
+    db.log_signing_event("middle", "pub", 1, base + chrono::Duration::seconds(5)).unwrap();
+
+    let logs = db.get_recent_logs(10).unwrap();
+    assert_eq!(logs[0].event_id, "newest");
+    assert_eq!(logs[1].event_id, "middle");
+    assert_eq!(logs[2].event_id, "oldest");
+}
+
+#[test]
+fn test_db_duplicate_team_member_pubkey_rejected() {
+    let db = Database::new(":memory:").expect("Failed to create in-memory database");
+    db.add_team_member("Alice", "npub1unique", "admin")
+        .expect("First insert should succeed");
+    let result = db.add_team_member("Alice2", "npub1unique", "signer");
+    assert!(result.is_err(), "Duplicate pubkey should be rejected by UNIQUE constraint");
+}
+
+#[test]
+fn test_db_signature_count() {
+    let db = Database::new(":memory:").expect("Failed to create in-memory database");
+    let now = Utc::now();
+
+    assert_eq!(db.signature_count().unwrap(), 0);
+
+    db.log_signing_event("e1", "pub", 1, now).unwrap();
+    assert_eq!(db.signature_count().unwrap(), 1);
+
+    db.log_signing_event("e2", "pub", 1, now + chrono::Duration::seconds(1)).unwrap();
+    assert_eq!(db.signature_count().unwrap(), 2);
 }
