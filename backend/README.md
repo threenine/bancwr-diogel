@@ -1,4 +1,4 @@
-# Bunker
+# Bancwr
 
 Enterprise Nsec Bunker for Nostr.
 
