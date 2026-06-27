@@ -16,14 +16,20 @@ BUNKER_NSEC=nsec1... BUNKER_PORT=4000 cargo run
 BUNKER_NSEC_FILE=/path/to/nsec cargo run
 ```
 
-### From DuckDB (logging & configuration):
-By default, the bunker uses DuckDB to store audit logs and configuration.
+### From SQLite (logging & configuration):
+By default, the bunker uses SQLite to store audit logs and configuration.
+SQLite is compiled into the binary via `rusqlite` with the `bundled` feature, so no
+system SQLite installation is required.
+
 The database file is created at `./data/bancwr.db` by default.
 You can change the path using the `DATABASE_PATH` environment variable.
 
 ```bash
 DATABASE_PATH=./custom_path/bunker.db cargo run
 ```
+
+The runtime database and its WAL sidecar files (`-wal`, `-shm`) are excluded from
+version control. Do not commit database files; use explicit seed fixtures instead.
 
 ## API
 
@@ -192,4 +198,7 @@ If you use an IDE that supports `.http` files (like RustRover or IntelliJ), you 
 - All tests live in the `tests/` directory.
 - Use `RUSTFLAGS="-D warnings" cargo clippy` for linting.
 - The project is named `bunker`.
+- The database layer lives in `src/db.rs` and uses `rusqlite` with bundled SQLite.
+  All UUIDs are stored as TEXT via `Uuid::to_string()` and all timestamps as TEXT
+  via `DateTime<Utc>::to_rfc3339()`.
 

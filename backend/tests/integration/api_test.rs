@@ -13,7 +13,7 @@ async fn setup_app() -> (String, PublicKey, reqwest::Client) {
     let pubkey = keys.public_key();
     let signer = Signer::new(keys.secret_key().clone());
     
-    // In-memory DuckDB for tests
+    // In-memory SQLite for tests
     let db = Database::new(":memory:").expect("Failed to create in-memory database");
     let config = Config {
         secret_key: keys.secret_key().clone(),
@@ -177,7 +177,7 @@ async fn test_api_get_logs() {
     let logs: Vec<Value> = res.json().await.expect("Failed to parse logs");
     
     // Use >= because other tests might be signing events in parallel
-    assert!(logs.len() >= initial_logs.len() + 1);
+    assert!(logs.len() > initial_logs.len());
     
     // Check if any of the top logs matches our expected event
     let found = logs.iter().take(10).any(|l| {
