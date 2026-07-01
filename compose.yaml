@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
     bunker:
       image: ghcr.io/threenine/bancwr-diogel-backend:latest
@@ -13,7 +11,7 @@ services:
         - RUST_LOG=info
         - DATABASE_PATH=/data/bancwr.db
       volumes:
-        - ./data:/data
+        - ./data:/data:Z
 
     frontend:
       image: ghcr.io/threenine/bancwr-diogel-frontend:latest

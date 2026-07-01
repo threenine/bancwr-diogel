@@ -35,7 +35,7 @@ version control. Do not commit database files; use explicit seed fixtures instea
 
 ### Health Check
 `GET /health`
-Returns `{"status": "ok"}` when the server is running. Used for Docker health checks.
+Returns `{"status": "ok"}` when the server is running. Used for health checks.
 
 ### Bunker Status
 `GET /api/bunker/status`
@@ -133,9 +133,9 @@ NIP46_ENABLED=true
 NIP46_RELAYS=wss://relay.nsecbunker.com,wss://relay.damus.io
 ```
 
-## Docker
+## Podman
 
-### Build & Run with Docker
+### Build & Run with Podman
 
 1. Create a `.env` file with your `BUNKER_NSEC`:
    ```env
@@ -143,22 +143,27 @@ NIP46_RELAYS=wss://relay.nsecbunker.com,wss://relay.damus.io
    BUNKER_PORT=3000
    ```
 
-2. Start the service using Docker Compose:
+2. Ensure the Podman socket is running (required for `podman compose`):
    ```bash
-   docker-compose up -d
+   systemctl --user enable --now podman.socket
    ```
 
-3. (Optional) Build the image with a different default port:
+3. Start the service using Podman Compose:
    ```bash
-   docker build --build-arg DEFAULT_PORT=4000 -t bunker .
+   podman compose up -d
    ```
 
-4. Check health:
+4. (Optional) Build the image with a different default port:
    ```bash
-   docker inspect --format='{{json .State.Health}}' $(docker-compose ps -q bunker)
+   podman build --build-arg DEFAULT_PORT=4000 -t bunker .
    ```
 
-### Using Docker Hub (Coming Soon)
+5. Check health:
+   ```bash
+   podman inspect --format='{{json .State.Health}}' $(podman compose ps -q bunker)
+   ```
+
+### Using GHCR
 
 ## Testing
 

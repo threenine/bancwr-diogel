@@ -1,11 +1,11 @@
 **PROJECT: Bancwr Diogel — Enterprise Nsec Bunker for Nostr**
 
-**Context:** Bancwr Diogel is a self-hosted nsec bunker for enterprises managing brand nostr accounts. It allows teams to share access to a brand identity without sharing the underlying nsec. The MVP targets Umbrel/Start9 users (Docker deployment).
+**Context:** Bancwr Diogel is a self-hosted nsec bunker for enterprises managing brand nostr accounts. It allows teams to share access to a brand identity without sharing the underlying nsec. The MVP targets Umbrel/Start9 users (Podman deployment).
 
 
 **Tech Stack:**
 - **Bunker:** Rust (tokio + nostr-sdk crate)
-- **Deployment:** Docker
+- **Deployment:** Podman
 
 ## **Bancwr Diogel — Agent Development Guidelines**
 
