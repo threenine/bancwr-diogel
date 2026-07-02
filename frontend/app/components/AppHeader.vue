@@ -11,7 +11,7 @@
               name="i-heroicons-shield-check"
               class="w-6 h-6 text-primary"
             />
-            Bancwr Diogel
+            Bancwr
           </NuxtLink>
 
           <nav class="hidden md:flex items-center gap-4 text-sm font-medium">

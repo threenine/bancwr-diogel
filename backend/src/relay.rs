@@ -28,6 +28,9 @@ impl RelayClient {
     
     /// Start listening for NIP-46 requests
     pub async fn run(&self) -> anyhow::Result<()> {
+        // Establish WebSocket connections to all added relays
+        self.pool.connect().await;
+
         // Subscribe to kind 24133 (NIP-46 requests) addressed to our pubkey
         let pubkey_bech32 = self.state.signer.read().await.public_key_bech32();
         let pubkey = PublicKey::from_bech32(&pubkey_bech32)?;
