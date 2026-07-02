@@ -1,0 +1,14 @@
+/target
+
+.idea
+
+.env
+
+/data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
